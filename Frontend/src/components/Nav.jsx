@@ -1,131 +1,247 @@
+// src/components/Nav.jsx — Bottom-centered Apple Music player-style pill (responsive + keyboard-aware)
 import { NavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+
+const Icon = {
+  Live: (p) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" {...p}>
+      <path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm-7 4a7 7 0 1114 0 7 7 0 01-14 0z"/>
+    </svg>
+  ),
+  List: (p) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" {...p}>
+      <path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+    </svg>
+  ),
+  Chat: (p) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" {...p}>
+      <path fill="currentColor" d="M20 2H4a2 2 0 00-2 2v15l4-3h14a2 2 0 002-2V4a2 2 0 00-2-2z"/>
+    </svg>
+  ),
+  Logout: (p) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" {...p}>
+      <path fill="currentColor" d="M16 13v-2H7V8l-5 4 5 4v-3h9zM20 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z"/>
+    </svg>
+  ),
+  Dot: (p) => (<svg viewBox="0 0 8 8" width="8" height="8" {...p}><circle cx="4" cy="4" r="3.5" fill="currentColor"/></svg>)
+};
 
 export default function Nav() {
   const [user, setUser] = useState(null);
   const [showLogout, setShowLogout] = useState(false);
+  const [hideForKeyboard, setHideForKeyboard] = useState(false);
   const navigate = useNavigate();
 
-  // Load user from localStorage on mount
+  // live user sync (no refresh)
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const read = () => {
+      try { const u = localStorage.getItem("user"); setUser(u ? JSON.parse(u) : null); } catch {}
+    };
+    read();
+    const onStorage = () => read();
+    const onAuth = () => read();
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("auth:update", onAuth);
+    const beat = setInterval(read, 400);
+    setTimeout(() => clearInterval(beat), 6000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("auth:update", onAuth);
+      clearInterval(beat);
+    };
+  }, []);
+
+  // Hide nav when virtual keyboard opens (mobile)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      // If the viewport height shrinks by >140px, keyboard is likely open
+      const kbd = window.innerHeight - vv.height > 140;
+      setHideForKeyboard(kbd);
+    };
+    vv.addEventListener("resize", onResize);
+    vv.addEventListener("scroll", onResize);
+    onResize();
+    return () => {
+      vv.removeEventListener("resize", onResize);
+      vv.removeEventListener("scroll", onResize);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    window.dispatchEvent(new Event("auth:update"));
     setUser(null);
     navigate("/login");
   };
 
-  const links = [
-    { path: "/livesession", title: "Live Session" },
-    { path: "/lead", title: "Leaderboard" },
-    { path: "/bot", title: "DoubtSolver" },
-    
-  ];
+  const links = useMemo(() => ([
+    { path: "/livesession", title: "Live Session", icon: <Icon.Live/> },
+    { path: "/lead",        title: "Leaderboard", icon: <Icon.List/> },
+    { path: "/bot",         title: "DoubtSolver", icon: <Icon.Chat/> },
+  ]), []);
+
+  const springBar = { type: "spring", stiffness: 140, damping: 20, mass: 0.9 };
+  const springUI  = { type: "spring", stiffness: 210, damping: 22, mass: 0.9 };
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 80, damping: 12 }}
-      className="fixed top-0 left-0 w-full flex justify-between items-center px-10 py-4 
-        bg-white/20 backdrop-blur-xl border-b border-white/30 shadow-lg 
-        rounded-b-2xl z-50"
-    >
-      {/* Logo */}
-      <NavLink to="/">
-        <motion.h1
-          whileHover={{ scale: 1.15, rotate: -1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 10 }}
-          className="text-2xl font-extrabold tracking-tight cursor-pointer 
-          bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600 bg-clip-text text-transparent"
+    <AnimatePresence initial={false}>
+      {!hideForKeyboard && (
+        <motion.nav
+          key="nav-pill"
+          initial={{ opacity: 0, y: 14, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0,  scale: 1 }}
+          exit={{ opacity: 0, y: 14, scale: 0.98 }}
+          transition={springBar}
+          // bottom center, safe-area aware
+          className="
+            fixed left-1/2 -translate-x-1/2
+            z-50 pointer-events-none
+            w-full max-w-[1000px] px-3 sm:px-4
+          "
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + clamp(10px, 2.5vw, 18px))",
+          }}
+          role="navigation"
+          aria-label="Primary"
         >
-          ClearLens
-        </motion.h1>
-      </NavLink>
-
-      {/* Links */}
-      <div className="flex gap-10 items-center">
-        {links.map(({ path, title }) => (
-          <NavLink key={path} to={path}>
-            {({ isActive }) => (
-              <motion.span
-                whileHover={{
-                  scale: 1.2,
-                  y: -2,
-                  color: "#2563EB",
-                }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                className={`text-sm font-medium cursor-pointer px-3 py-1 rounded-lg transition-colors
-                  ${
-                    isActive
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                      : "text-gray-700 hover:text-blue-500"
-                  }`}
-              >
-                {title}
-              </motion.span>
-            )}
-          </NavLink>
-        ))}
-
-        {/* User or Login */}
-        {!user ? (
-          <NavLink to="/login">
-            {({ isActive }) => (
-              <motion.span
-                whileHover={{
-                  scale: 1.2,
-                  y: -2,
-                  color: "#2563EB",
-                }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                className={`text-sm font-medium cursor-pointer px-3 py-1 rounded-lg transition-colors
-                  ${
-                    isActive
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                      : "text-gray-700 hover:text-blue-500"
-                  }`}
-              >
-                Login
-              </motion.span>
-            )}
-          </NavLink>
-        ) : (
           <div
-            className="relative"
-            onMouseEnter={() => setShowLogout(true)}
-            onMouseLeave={() => setTimeout(() => setShowLogout(false), 500)} // delay
+            className="pointer-events-auto relative flex items-center justify-between gap-2 sm:gap-4
+                       h-12 sm:h-[56px] rounded-full px-3.5 sm:px-5"
+            style={{
+              background: "rgba(26,26,28,0.70)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.35)"
+            }}
           >
-            <motion.span
-              whileHover={{ scale: 1.1 }}
-              className="text-sm font-semibold cursor-pointer px-3 py-1 rounded-lg text-blue-900"
-            >
-              {user.name}
-            </motion.span>
+            {/* edge sheens like Music */}
+            <span className="pointer-events-none absolute inset-0 rounded-full"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 12%, rgba(255,255,255,0.02) 48%, transparent 70%)" }}/>
+            <span className="pointer-events-none absolute -left-1 top-0 bottom-0 w-10 rounded-l-full bg-gradient-to-r from-black/35 to-transparent"/>
+            <span className="pointer-events-none absolute -right-1 top-0 bottom-0 w-10 rounded-r-full bg-gradient-to-l from-black/35 to-transparent"/>
 
-            {showLogout && (
-              <motion.button
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                onClick={handleLogout}
-                className="absolute top-full mt-2 right-0 bg-white border border-gray-200 shadow-md px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Log out
-              </motion.button>
-            )}
+            {/* Brand (left) */}
+            <NavLink to="/" onClick={(e)=>e.stopPropagation()} className="shrink-0">
+              <motion.div whileHover={{ y: -1 }} transition={springUI} className="flex items-center gap-2 select-none">
+                <span
+                  className="font-extrabold bg-gradient-to-b from-white/95 to-white/60 bg-clip-text text-transparent drop-shadow-[0_1px_0_rgba(255,255,255,0.35)]"
+                  style={{ fontSize: "clamp(0.95rem, 1.6vw, 1.125rem)" }}
+                >
+                  ClearLens
+                </span>
+                {user && (
+                  <span className="hidden sm:inline text-[11px] text-white/70">
+                    • Hi, {user.name?.split(" ")[0]}
+                  </span>
+                )}
+              </motion.div>
+            </NavLink>
+
+            {/* Divider */}
+            <span className="hidden sm:block h-6 w-px bg-white/10" />
+
+            {/* Center icon group */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {links.map(({ path, title, icon }) => (
+                <NavLink key={path} to={path} className="relative group" onClick={(e)=>e.stopPropagation()} aria-label={title}>
+                  {({ isActive }) => (
+                    <motion.button
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={springUI}
+                      className={`grid place-items-center rounded-full border
+                        h-10 w-10 sm:h-10 sm:w-10
+                        ${isActive ? "bg-white text-black border-white"
+                                   : "bg-white/5 text-white/85 border-white/10"}`}
+                      aria-current={isActive ? "page" : undefined}
+                      title={title}
+                    >
+                      {icon}
+                      {isActive && (
+                        <motion.span
+                          layoutId="navActiveHalo"
+                          className="absolute -z-10 inset-0 rounded-full"
+                          style={{ boxShadow: "0 0 0 8px rgba(255,255,255,0.08)" }}
+                        />
+                      )}
+                    </motion.button>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* Center dot (subtle) */}
+            <div className="hidden md:flex items-center text-white/60">
+              <Icon.Dot />
+            </div>
+
+            {/* Auth (right) */}
+            <div className="relative flex items-center gap-2">
+              {!user ? (
+                <NavLink to="/login" onClick={(e)=>e.stopPropagation()}>
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={springUI}
+                    className="h-9 px-3.5 sm:px-4 rounded-full bg-white text-black text-xs sm:text-sm font-semibold border border-white shadow-sm"
+                  >
+                    Login
+                  </motion.button>
+                </NavLink>
+              ) : (
+                <div
+                  onMouseEnter={() => setShowLogout(true)}
+                  onMouseLeave={() => setShowLogout(false)}
+                  className="relative"
+                >
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={springUI}
+                    className="h-9 px-2.5 sm:px-3 flex items-center gap-2 rounded-full bg-white/10 text-white border border-white/10"
+                    aria-haspopup="menu"
+                    aria-expanded={showLogout}
+                  >
+                    <span className="grid place-items-center h-6 w-6 rounded-full bg-white/20 text-white text-xs">
+                      {user.name?.[0]?.toUpperCase() || "U"}
+                    </span>
+                    <span className="text-xs sm:text-sm max-w-[120px] truncate">{user.name}</span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showLogout && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 8 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={springUI}
+                        className="absolute right-0 bottom-12 min-w-[160px]
+                                   rounded-2xl bg-[#111]/90 backdrop-blur-xl border border-white/10
+                                   text-white shadow-[0_10px_26px_rgba(0,0,0,0.35)] p-2"
+                        onClick={(e)=>e.stopPropagation()}
+                        role="menu"
+                      >
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left text-sm px-3 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2"
+                          role="menuitem"
+                        >
+                          <Icon.Logout /> Log out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </motion.nav>
+        </motion.nav>
+      )}
+    </AnimatePresence>
   );
 }

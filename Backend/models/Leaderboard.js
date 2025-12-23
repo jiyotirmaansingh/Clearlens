@@ -15,7 +15,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add/update a user’s score
 router.post("/update", async (req, res) => {
   try {
     const { userId, username, focusTime } = req.body;

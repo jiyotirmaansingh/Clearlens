@@ -1,6 +1,6 @@
 // routes/LeaderboardRoute.js
 const express = require("express");
-const User = require("../models/User"); // ✅ correct relative path
+const User = require("../models/User"); 
 const router = express.Router();
 
 // Example route: get leaderboard

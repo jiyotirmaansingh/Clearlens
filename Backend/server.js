@@ -12,7 +12,14 @@ const leaderboardRoutes = require("./routes/LeaderboardRoute");
 const app = express();
 
 // 🔹 Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",           // ✅ Local frontend (Vite dev)
+    "https://clear-lens-beta.vercel.app/"     // ✅ Production frontend on Vercel
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(bodyParser.json());
 
@@ -34,7 +41,7 @@ app.post("/chat", async (req, res) => {
     });
 
     const reply = response.data.response;
-res.json({ reply });
+    res.json({ reply });
 
   } catch (err) {
     console.error(
@@ -47,7 +54,7 @@ res.json({ reply });
 
 // 🔹 Base route
 app.get("/", (req, res) => {
-  res.send("🚀 Welcome to CalmCam + Auth + Chat Backend");
+  res.send("🚀 Welcome to ClearLens Backend (Auth + Chat + DB Connected)");
 });
 
 // 🔹 Start server

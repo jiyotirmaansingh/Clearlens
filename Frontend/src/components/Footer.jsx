@@ -1,92 +1,103 @@
 // src/components/Footer.jsx
-import {
-    FaFacebookSquare,
-    FaGithubSquare,
-    FaInstagram,
-    FaTwitterSquare,
-    FaLinkedin,
-  } from "react-icons/fa";
-  
-  export default function Footer() {
-    return (
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto py-16 px-6 grid lg:grid-cols-3 gap-12">
-          {/* Brand Section */}
-          <div>
-            <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">
-              CalmCam
-            </h1>
-            <p className="mt-4 text-gray-600 text-lg max-w-sm">
-              Helping you stay <span className="font-semibold text-blue-900">focused</span> 
-              and productive with real-time AI-powered attention tracking.
-            </p>
-            <div className="flex gap-5 mt-6 text-blue-900">
-              <a href="#" className="hover:scale-110 transition transform">
-                <FaFacebookSquare size={28} />
-              </a>
-              <a href="#" className="hover:scale-110 transition transform">
-                <FaInstagram size={28} />
-              </a>
-              <a href="#" className="hover:scale-110 transition transform">
-                <FaTwitterSquare size={28} />
-              </a>
-              <a href="#" className="hover:scale-110 transition transform">
-                <FaGithubSquare size={28} />
-              </a>
-              <a href="#" className="hover:scale-110 transition transform">
-                <FaLinkedin size={28} />
-              </a>
-            </div>
+import React from "react";
+import { Link } from "react-router-dom";
+
+export default function Footer() {
+  const cols = [
+    { title: "Product", items: [{ label: "Home", to: "/" }, { label: "Login", to: "/login" }] },
+    { title: "Company", items: [{ label: "Contact", to: "/contact" }] },
+    { title: "Legal", items: [{ label: "Terms of Service", to: "/terms" }, { label: "Privacy Policy", to: "/privacy" }] },
+  ];
+
+  return (
+    <footer className="relative">
+      <style>{`
+        @keyframes moveGradient { 
+          0% { background-position: 0% 50%; } 
+          50% { background-position: 100% 50%; } 
+          100% { background-position: 0% 50%; } 
+        }
+
+        .footer-shell {
+          padding: clamp(1.25rem, 3vw, 2rem);
+          position: relative;
+          overflow: visible;
+          border-radius: 16px;
+          background: linear-gradient(120deg,
+            rgba(196,181,253,0.14) 0%,
+            rgba(244,114,182,0.1) 30%,
+            rgba(134,239,172,0.08) 60%,
+            rgba(255,214,167,0.06) 100%);
+          background-size: 300% 300%;
+          animation: moveGradient 30s ease-in-out infinite;
+          -webkit-backdrop-filter: blur(8px) saturate(1.06);
+          backdrop-filter: blur(8px) saturate(1.06);
+          border: 1px solid rgba(255,255,255,0.42);
+          box-shadow:
+            0 12px 40px rgba(2,6,23,0.06),
+            inset 0 1px 0 rgba(255,255,255,0.55);
+        }
+
+        /* highlight 'liquid' sheen */
+        .footer-shell::before {
+          content: "";
+          position: absolute;
+          left: -10%;
+          top: -30%;
+          width: 120%;
+          height: 60%;
+          transform: rotate(-12deg);
+          background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
+          filter: blur(28px);
+          pointer-events: none;
+          opacity: 0.9;
+          border-radius: 50%;
+        }
+
+        .footer-inner {
+          position: relative;
+          z-index: 2;
+        }
+
+        .footer-divider { height: 1px; background-color: rgba(2,6,23,0.04); margin: 1rem 0; opacity: 0.9; }
+
+        .link-underline { position: relative; display: inline-block; }
+        .link-underline::after {
+          content: "";
+          position: absolute;
+          left: 0; bottom: -2px;
+          height: 2px;
+          width: 0%;
+          background: linear-gradient(90deg,#7c3aed,#f472b6);
+          transition: width 220ms ease;
+          border-radius: 2px;
+        }
+        .link-underline:hover::after { width: 100%; }
+
+        @media (max-width: 640px) {
+          .footer-shell { border-radius: 12px; padding: 1rem; }
+        }
+      `}</style>
+
+      <div className="footer-shell container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="footer-inner mx-auto max-w-3xl py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="text-lg font-bold">ClearLens</div>
+            <div className="text-sm text-neutral-500">— Clean. Calm. Focused.</div>
           </div>
-  
-          {/* Links Section */}
-          <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-8 text-gray-600">
-            <div>
-              <h6 className="font-semibold text-blue-900 mb-3">Product</h6>
-              <ul className="space-y-2">
-                <li className="hover:text-blue-700 cursor-pointer">Features</li>
-                <li className="hover:text-blue-700 cursor-pointer">Focus Insights</li>
-                <li className="hover:text-blue-700 cursor-pointer">Sessions</li>
-                <li className="hover:text-blue-700 cursor-pointer">Reports</li>
-              </ul>
-            </div>
-  
-            <div>
-              <h6 className="font-semibold text-blue-900 mb-3">Support</h6>
-              <ul className="space-y-2">
-                <li className="hover:text-blue-700 cursor-pointer">Help Center</li>
-                <li className="hover:text-blue-700 cursor-pointer">Guides</li>
-                <li className="hover:text-blue-700 cursor-pointer">API Docs</li>
-                <li className="hover:text-blue-700 cursor-pointer">Contact Us</li>
-              </ul>
-            </div>
-  
-            <div>
-              <h6 className="font-semibold text-blue-900 mb-3">Company</h6>
-              <ul className="space-y-2">
-                <li className="hover:text-blue-700 cursor-pointer">About Us</li>
-                <li className="hover:text-blue-700 cursor-pointer">Blog</li>
-                <li className="hover:text-blue-700 cursor-pointer">Careers</li>
-                <li className="hover:text-blue-700 cursor-pointer">Press</li>
-              </ul>
-            </div>
-  
-            <div>
-              <h6 className="font-semibold text-blue-900 mb-3">Legal</h6>
-              <ul className="space-y-2">
-                <li className="hover:text-blue-700 cursor-pointer">Privacy Policy</li>
-                <li className="hover:text-blue-700 cursor-pointer">Terms of Service</li>
-                <li className="hover:text-blue-700 cursor-pointer">Security</li>
-              </ul>
-            </div>
-          </div>
+
+          <nav className="flex items-center gap-4">
+            <Link className="link-underline text-sm text-neutral-600 hover:underline" to="/features">Features</Link>
+            <Link className="link-underline text-sm text-neutral-600 hover:underline" to="/pricing">Pricing</Link>
+            <Link className="link-underline text-sm text-neutral-600 hover:underline" to="/terms">Terms</Link>
+            <Link className="link-underline text-sm text-neutral-600 hover:underline" to="/privacy">Privacy</Link>
+          </nav>
+
+          <div className="text-sm text-neutral-500">© {new Date().getFullYear()} ClearLens. All rights reserved.</div>
         </div>
-  
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-200 py-6 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} CalmCam. All rights reserved.
-        </div>
-      </footer>
-    );
-  }
-  
+
+        <div className="footer-divider" />
+      </div>
+    </footer>
+  );z
+}
